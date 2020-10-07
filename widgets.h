@@ -1,3 +1,7 @@
+#ifndef WIDGETS_H
+#define WIDGETS_H
+#include "Model.h"
+#include <QPoint>
 #include <QPixmap>
 #include <QVector>
 #include <QWidget>
@@ -18,9 +22,12 @@ private:
     QGroupBox *box1;
     QGroupBox *box2;
     QTableWidget *t_top, *t_1, *t_2, *t_3, *t_4, *t_5, *t_6;
-    QLineEdit *line1, *line2, *line3;
-    
+    QLineEdit *line1, *line2, *line3, *line4, *line5;
+
     void setTab(int s);
+private slots:
+    void setUpTables();
+    void addValuesToV(int c, int r);
 };
 
 #endif // WIDGETS_H
