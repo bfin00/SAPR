@@ -3,11 +3,5 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QTableWidgetItem>
-Model::Model(QWidget *parent): QWidget(parent)
-{
+Model::Model(QWidget *parent): QWidget(parent) {}
 
-}
-void Model::setUpWidgets()
-{
-
-}
