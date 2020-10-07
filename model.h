@@ -10,12 +10,10 @@ public:
     QVector<int> v_1;
     QVector<int> v_2;
     QVector<int> v_3;
-    QVector<QVector<int>> vv_4;
-    QVector<QVector<int>> vv_2;
-    QVector<QVector<int>> vvv_2;
+    QVector<QVector<int>> v_4;
+    QVector<QVector<int>> v_5;
+    QVector<QVector<int>> v_6;
 private:
     void setUpWidgets();
-public slots:
-    void add_row(int c, int r, QTableWidget* t);
 };
 #endif // MODEL_H
