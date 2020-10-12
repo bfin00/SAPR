@@ -1,30 +1,20 @@
 #include "mainwindow.h"
-#include <QtWidgets>
-#include <stdlib.h>
-MainWindow::MainWindow(QWidget *parent)
+#include "Tables.h"
+
+MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
-    setMinimumSize(1800, 900);
-    SetupMenus();
-    SetupWidgets();
-}
-void MainWindow::SetupMenus()
-{
-    QMenu *fileMenu = menuBar()->addMenu(tr("File"));
-
-    QAction *exitAction = fileMenu->addAction(tr("E&xit"), qApp, &QCoreApplication::quit);
-    exitAction->setShortcuts(QKeySequence::Quit);
+    _tables = new Tables{ this };
+    connect(_tables, &Tables::passParams, this, &MainWindow::calcResult);
+    setWindowTitle(QStringLiteral("САПР"));
+    setCentralWidget(_tables);
+    showMaximized();
 }
 
-void MainWindow::SetupWidgets()
+MainWindow::~MainWindow() = default;
+
+void MainWindow::calcResult(const Params& params)
 {
-    QFrame *frame = new QFrame(this);
-    QGridLayout *layout = new QGridLayout(frame);
-    w1 = new Widgets(frame);
-    m1 = new Model(frame);
-    layout->addWidget(w1);
-    layout->addWidget(m1);
-    setCentralWidget(frame);
+//обработка результатов(возможно, вынести в отдельный класс)
 }
-MainWindow::~MainWindow() {}
 
