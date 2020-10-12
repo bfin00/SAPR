@@ -1,24 +1,21 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
-#include "Model.h"
-#include "widgets.h"
 #include <QMainWindow>
-class QLabel;
+
+struct Params;
+class Tables;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void calcResult(const Params& params);
 
 private:
-    void SetupMenus();
-    void SetupWidgets();
-    Widgets *w1;
-    Model *m1;
+    Tables* _tables{};
 };
-#endif // MAINWINDOW_H
