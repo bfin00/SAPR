@@ -30,26 +30,31 @@ Tables::Tables(QWidget *parent)
 
 void Tables::setParamTables()
 {
-    _t_1->setRowCount(_line3->text().toInt());
+    if (!checkLines())
+        return;
+
     _t_2->setRowCount(_line1->text().toInt());
     _t_3->setRowCount(_line2->text().toInt());
     //t_4 - задается явно
-    _t_5->setRowCount(_line4->text().toInt());
-    _t_6->setRowCount(_line5->text().toInt());
+    _t_5->setRowCount(_line3->text().toInt());
+    _t_6->setRowCount(_line1->text().toInt());
 }
 
 void Tables::prepareParams()
 {
-    Params params;
-
    clearVectors(params);
 
-   addValuesToV(_t_1, params.x_node);
    addValuesToV(_t_2, params.types_for_rod);
    addValuesToV(_t_3, params.types_descrip);
    addValuesToV(_t_4, params.fixed_nodes);
    addValuesToV(_t_5, params.centred_loads);
    addValuesToV(_t_6, params.distr_loads);
+
+   if (!checkFixedNodes())
+       return;
+   if (!checkRods())
+       return;
+
 
     emit passParams(params);
 }
@@ -66,20 +71,13 @@ void Tables::createTopBox()
     _line2 = new QLineEdit{ this };
     QLabel* lbl3 = new QLabel(QStringLiteral("Количество\nузлов"), this);
     _line3 = new QLineEdit{ this };
-    QLabel* lbl4 = new QLabel(QStringLiteral("Сосредоточенные\nнагрузки"), this);
-    _line4 = new QLineEdit{ this };
-    QLabel* lbl5 = new QLabel(QStringLiteral("Продольные\nнагрузки"), this);
-    _line5 = new QLineEdit{ this };
+
     inputLayout->addWidget(lbl1);
     inputLayout->addWidget(_line1);
     inputLayout->addWidget(lbl2);
     inputLayout->addWidget(_line2);
     inputLayout->addWidget(lbl3);
     inputLayout->addWidget(_line3);
-    inputLayout->addWidget(lbl4);
-    inputLayout->addWidget(_line4);
-    inputLayout->addWidget(lbl5);
-    inputLayout->addWidget(_line5);
     inputLayout->addWidget(but);
     _box1->setLayout(inputLayout);
 
@@ -88,36 +86,35 @@ void Tables::createTopBox()
     _line1->setValidator(val);
     _line2->setValidator(val);
     _line3->setValidator(val);
-    _line4->setValidator(val);
-    _line5->setValidator(val);
 }
 
 void Tables::createTableWidgets()
 {
+    auto drowBut = new QPushButton(tr("Отрисовать конструкцию"));
+    connect(drowBut, &QPushButton::clicked, this, &Tables::prepareParams);
+    connect(drowBut, &QPushButton::clicked, this, &Tables::drawConstruction);
     _box2 = new QGroupBox(QStringLiteral("Параметры стержня"), this);
     auto tableLayout = new QHBoxLayout{};
-    _t_1 = new QTableWidget(0, 1, this);
     _t_2 = new QTableWidget(0, 1, this);
     _t_3 = new QTableWidget(0, 4, this);
     _t_4 = new QTableWidget(2, 1, this);
-    _t_5 = new QTableWidget(0, 2, this);
-    _t_6 = new QTableWidget(0, 2, this);
+    _t_5 = new QTableWidget(0, 1, this);
+    _t_6 = new QTableWidget(0, 1, this);
 
     setWidgetSize();
     setHeaders();
 
-    tableLayout->addWidget(_t_1);
     tableLayout->addWidget(_t_2);
     tableLayout->addWidget(_t_3);
     tableLayout->addWidget(_t_4);
     tableLayout->addWidget(_t_5);
     tableLayout->addWidget(_t_6);
+    tableLayout->addWidget(drowBut);
     _box2->setLayout(tableLayout);
 }
 
 void Tables::clearVectors(Params& params)
 {
-    params.x_node.clear();
     params.distr_loads.clear();
     params.fixed_nodes.clear();
     params.centred_loads.clear();
@@ -125,8 +122,8 @@ void Tables::clearVectors(Params& params)
     params.types_for_rod.clear();
 }
 
-
-void Tables::addValuesToV(QTableWidget* table, QVector<QVector<int>>& vector)
+template <typename T>
+void Tables::addValuesToV(QTableWidget* table, QVector<QVector<T>>& vector)
 {
     for (auto i = 0; i < table->rowCount(); ++i)
     {
@@ -138,29 +135,250 @@ void Tables::addValuesToV(QTableWidget* table, QVector<QVector<int>>& vector)
         }
     }
 }
+template <typename T>
+void Tables::addValuesToV(QTableWidget* table, QVector<T>& vector)
+{
+    for (auto i = 0; i < table->rowCount(); ++i)
+           for (auto j = 0; j < table->columnCount(); ++j)
+               vector.append(table->item(i, j)->text().toInt());
+}
 
 void Tables::setHeaders()
 {
-    _t_1->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("координата X\nдля узла")));
     _t_2->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Тип стержня")));
-    _t_3->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("b")));
-    _t_3->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("h")));
-    _t_3->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("E")));
-    _t_3->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("σ")));
+    _t_3->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("A")));
+    _t_3->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("E")));
+    _t_3->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("σ")));
+    _t_3->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("L")));
     _t_4->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Заделки")));
-    _t_5->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Сосредоточенные\nсилы")));
-    _t_6->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Продольные\nсилы")));
-    _t_5->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("номер узла")));
-    _t_6->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("номер стержня")));
+    _t_5->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Сосредоточенные\nсилы")));
+    _t_6->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Продольные\nсилы")));
 }
 
 void Tables::setWidgetSize()
 {
-    _t_1->setMaximumSize(160, 200);
     _t_2->setMaximumSize(160, 200);
     _t_3->setMaximumSize(640, 200);
     _t_4->setMaximumSize(160, 200);
-    _t_5->setMaximumSize(320, 200);
-    _t_6->setMaximumSize(320, 200);
+    _t_5->setMaximumSize(160, 200);
+    _t_6->setMaximumSize(160, 200);
+}
+
+bool Tables::checkLines()
+{
+    if (_line2->text().toInt() > _line1->text().toInt())
+    {
+        QMessageBox::warning(this, tr("Неверные данные"),
+                             tr("Количество типов стержней не может быть больше количества стержней"),
+                             QMessageBox::Close);
+        return false;
+    }
+    if (_line1->text() == "\0" || _line2->text() == "\0" || _line3->text() == "\0")
+    {
+        QMessageBox::warning(this, tr("Пустое поле"),
+                             tr("Не введено поле"),
+                             QMessageBox::Close);
+        return false;
+    }
+    return true;
+}
+
+bool Tables::save()
+{
+    QFileDialog dialog(this);
+        dialog.setWindowModality(Qt::WindowModal);
+        dialog.setAcceptMode(QFileDialog::AcceptSave);
+        if (dialog.exec() != QDialog::Accepted)
+            return false;
+        return saveFile(dialog.selectedFiles().first());
+
+}
+
+bool Tables::saveFile(const QString& fileName)
+{
+    QString errorMessage;
+
+        QGuiApplication::setOverrideCursor(Qt::WaitCursor);
+        QSaveFile file(fileName);
+        if (file.open(QFile::WriteOnly | QFile::Text))
+        {
+            QTextStream out(&file);
+
+            out << tr("Тип для стержня") << endl;
+            writeToFile(out, params.types_for_rod);
+            out << tr("Описание типов стержня") << endl;
+            writeToFile(out, params.types_descrip);
+            out << tr("Заделки") << endl;
+            writeToFile(out, params.fixed_nodes);
+            out << tr("Сосредоточенные нагрузки") << endl;
+            writeToFile(out, params.centred_loads);
+            out << tr("Продольные нагрузки") << endl;
+            writeToFile(out, params.distr_loads);
+
+            if (!file.commit())
+            {
+                errorMessage = tr("Cannot write file %1:\n%2.")
+                               .arg(QDir::toNativeSeparators(fileName), file.errorString());
+            }
+        }
+        else
+        {
+            errorMessage = tr("Cannot open file %1 for writing:\n%2.")
+                           .arg(QDir::toNativeSeparators(fileName), file.errorString());
+        }
+        QGuiApplication::restoreOverrideCursor();
+
+        if (!errorMessage.isEmpty())
+        {
+            QMessageBox::warning(this, tr("Application"), errorMessage);
+            return false;
+        }
+
+        return true;
+}
+template <typename T>
+void Tables::writeToFile(QTextStream &out, const QVector<QVector<T> > &vec)
+{
+    for (auto i = 0; i < vec.size(); ++i)
+    {
+        for (auto j = 0; j < vec.at(i).size(); ++j)
+        {
+            out << vec[i][j] << " ";
+        }
+        out << endl;
+    }
+    out << endl;
+}
+template <typename T>
+void Tables::writeToFile(QTextStream &out, const QVector<T> &vec)
+{
+    for (auto i = 0; i < vec.size(); ++i)
+    {
+        out << vec[i] << " ";
+    }
+    out << endl << endl;
+}
+bool Tables::checkFixedNodes()
+{
+    if (params.fixed_nodes[0] > _line3->text().toInt() || params.fixed_nodes[1] > _line3->text().toInt())
+    {
+        QMessageBox::warning(this, tr("Неверные данные"),
+                             tr("неверный номер узла"),
+                             QMessageBox::Close);
+        return false;
+    }
+    if (params.fixed_nodes[0] == params.fixed_nodes[1])
+    {
+        QMessageBox::warning(this, tr("Неверные данные"),
+                             tr("совпадают номера узлов"),
+                             QMessageBox::Close);
+        return false;
+    }
+    return true;
+}
+bool Tables::checkRods()
+{
+    for (auto i = 0; i < params.types_for_rod.size(); ++i)
+    {
+        if (params.types_for_rod[i] > _line2->text().toInt() || params.types_for_rod[i] < 1)
+        {
+            QMessageBox::warning(this, tr("Неверные данные"),
+                                 tr("неверный тип стержня"),
+                                 QMessageBox::Close);
+            return false;
+        }
+    }
+    return true;
+}
+void Tables::read()
+{
+    QString fileName;
+    QVector<QString> ss;
+    fileName = QFileDialog::getOpenFileName(this, tr("Открыть файл"), "/home", tr("Text (*.txt)"));
+    readFromFile(fileName);
+}
+void Tables::readFromFile(const QString& fileName)
+{
+    clearVectors(params);
+    QVector<QString> strsFromFile;
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return;
+    QTextStream in(&file);
+    readIntoVecs(in, params.types_for_rod);
+    readIntoVecs(in, params.types_descrip);
+    readIntoVecs(in, params.fixed_nodes);
+    readIntoVecs(in, params.centred_loads);
+    readIntoVecs(in, params.distr_loads);
+
+    setTables();
+}
+
+void Tables::readIntoVecs(QTextStream& in, QVector<int>& vec)
+{
+    in.readLine();
+    QString s_1 = in.readLine();
+    QStringList l_1 = s_1.split(" ");
+    l_1.removeLast();  // удаляю последний элемент, так как при записи в файл ставится
+                       //  пробел после последнего элемента, что ведет к элементу "" в списке в конце
+    for (auto j = 0; j < l_1.size(); ++j)
+        vec.push_back(l_1[j].toInt());
+
+    in.readLine();
+}
+void Tables::readIntoVecs(QTextStream& in, QVector<QVector<double>>& vec)
+{
+    in.readLine();
+
+    QString s_2 = in.readLine();
+    while (s_2 != "")
+    {
+        QStringList temp = s_2.split(" ");
+        temp.removeLast();
+        QVector<double> temp_vec;
+        for (auto j = 0; j < temp.size(); ++j)
+            temp_vec.push_back(temp[j].toDouble());
+
+        vec.push_back(temp_vec);
+        s_2 = in.readLine();
+
+    }
+}
+void Tables::setTables()
+{
+    setTable(params.types_for_rod, _t_2);
+    setTable(params.types_descrip, _t_3);
+    setTable(params.fixed_nodes, _t_4);
+    setTable(params.centred_loads, _t_5);
+    setTable(params.distr_loads, _t_6);
+    _line1->setText(QString::number(params.types_for_rod.size()));
+    _line2->setText(QString::number(params.types_descrip.size()));
+    _line3->setText(QString::number(params.centred_loads.size()));
+}
+void Tables::setTable(const QVector<int> &vec, QTableWidget* table)
+{
+    table->setRowCount(vec.size());
+    for (auto i = 0; i < vec.size(); ++i)
+    {
+        QString temp = QString::number(vec[i]);
+        table->setItem(i, 0, new QTableWidgetItem(temp));
+    }
+}
+void Tables::setTable(const QVector<QVector<double>>& vec, QTableWidget* table)
+{
+    table->setRowCount(vec.size());
+    for (auto i = 0; i < vec.size(); ++i)
+    {
+        for (auto j = 0; j < vec[i].size(); ++j)
+        {
+            QString temp = QString::number(vec[i][j]);
+            table->setItem(i, j, new QTableWidgetItem(temp));
+        }
+    }
+}
+
+void Tables::drawConstruction()
+{
+
 }
 
