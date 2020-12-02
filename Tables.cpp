@@ -7,7 +7,9 @@
 #include <QTableWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
-
+#include "mainwindow.h"
+//Сделать: выход из функции при некорректных данных
+//         вынос в лямбда функции эмитов сигналов непосредственно в коннекте
 Tables::Tables(QWidget *parent)
     : QWidget(parent)
 {
@@ -42,21 +44,55 @@ void Tables::setParamTables()
 
 void Tables::prepareParams()
 {
-   clearVectors(params);
-
-   addValuesToV(_t_2, params.types_for_rod);
-   addValuesToV(_t_3, params.types_descrip);
-   addValuesToV(_t_4, params.fixed_nodes);
-   addValuesToV(_t_5, params.centred_loads);
-   addValuesToV(_t_6, params.distr_loads);
-
-   if (!checkFixedNodes())
-       return;
-   if (!checkRods())
-       return;
-
+    saveParams();
 
     emit passParams(params);
+}
+
+void Tables::saveParams()
+{
+    clearVectors(params);
+    checkEmptyCells(_t_2);
+    checkEmptyCells(_t_3);
+    checkEmptyCells(_t_5);
+    checkEmptyCells(_t_6);
+
+    addValuesToV(_t_2, params.types_for_rod);
+    addValuesToV(_t_3, params.types_descrip);
+    addValuesToV(_t_4, params.fixed_nodes);
+    addValuesToV(_t_5, params.centred_loads);
+    addValuesToV(_t_6, params.distr_loads);
+//    convertLoads(params.distr_loads);
+//    convertLoads(params.centred_loads);
+    params.type_for_each_rod.resize(params.types_for_rod.size());
+    for (auto i = 0; i < params.types_for_rod.size(); ++i)
+    {
+        for (auto j = 0; j < 5; ++j)
+        {
+            params.type_for_each_rod[i].resize(5);
+            if (j == 0)
+            {
+                params.type_for_each_rod[i][j] = i+1;
+            }
+            else
+            {
+                params.type_for_each_rod[i][j] = params.types_descrip[params.types_for_rod[i] - 1][j-1];
+            }
+        }
+    }
+    if (!checkFixedNodes())
+        return;
+    if (!checkRods())
+        return;
+
+}
+
+void Tables::convertLoads(QVector<int>& vec)
+{
+    for (auto i = 0; i < vec.size(); ++i)
+    {
+        vec[i] = vec[i] * 100;
+    }
 }
 
 void Tables::createTopBox()
@@ -91,22 +127,31 @@ void Tables::createTopBox()
 void Tables::createTableWidgets()
 {
     auto drowBut = new QPushButton(tr("Отрисовать конструкцию"));
-    connect(drowBut, &QPushButton::clicked, this, &Tables::prepareParams);
-    connect(drowBut, &QPushButton::clicked, this, &Tables::drawConstruction);
+    connect(drowBut, &QPushButton::clicked, this, &Tables::saveParams);
+    connect(drowBut, &QPushButton::clicked, this, &Tables::sendParamsForDraw); // возможно как-то вынести в лямбда-функцию
     _box2 = new QGroupBox(QStringLiteral("Параметры стержня"), this);
     auto tableLayout = new QHBoxLayout{};
     _t_2 = new QTableWidget(0, 1, this);
     _t_3 = new QTableWidget(0, 4, this);
     _t_4 = new QTableWidget(2, 1, this);
+    _t_4->setItem(0, 0, new QTableWidgetItem("0"));
+    _t_4->setItem(1, 0, new QTableWidgetItem("0"));
     _t_5 = new QTableWidget(0, 1, this);
     _t_6 = new QTableWidget(0, 1, this);
+
+    left = new QCheckBox(tr("Заделка слева"));
+    right = new QCheckBox(tr("Заделка справа"));
+    connect(left, &QCheckBox::stateChanged, this, &Tables::checkBoxForLeft);
+    connect(right, &QCheckBox::stateChanged, this, &Tables::checkBoxForRight);
 
     setWidgetSize();
     setHeaders();
 
     tableLayout->addWidget(_t_2);
     tableLayout->addWidget(_t_3);
-    tableLayout->addWidget(_t_4);
+    //tableLayout->addWidget(_t_4);
+    tableLayout->addWidget(left);
+    tableLayout->addWidget(right);
     tableLayout->addWidget(_t_5);
     tableLayout->addWidget(_t_6);
     tableLayout->addWidget(drowBut);
@@ -131,7 +176,7 @@ void Tables::addValuesToV(QTableWidget* table, QVector<QVector<T>>& vector)
         for (auto j = 0; j < table->columnCount(); ++j)
         {
             vector[i].resize(table->columnCount());
-            vector[i][j] = table->item(i, j)->text().toInt();
+            vector[i][j] = table->item(i, j)->text().toDouble();
         }
     }
 }
@@ -150,7 +195,7 @@ void Tables::setHeaders()
     _t_3->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("E")));
     _t_3->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("σ")));
     _t_3->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("L")));
-    _t_4->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Заделки")));
+    //_t_4->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Заделки")));
     _t_5->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Сосредоточенные\nсилы")));
     _t_6->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Продольные\nсилы")));
 }
@@ -159,7 +204,7 @@ void Tables::setWidgetSize()
 {
     _t_2->setMaximumSize(160, 200);
     _t_3->setMaximumSize(640, 200);
-    _t_4->setMaximumSize(160, 200);
+    _t_4->setMaximumSize(0, 0); //переделать потом
     _t_5->setMaximumSize(160, 200);
     _t_6->setMaximumSize(160, 200);
 }
@@ -177,6 +222,13 @@ bool Tables::checkLines()
     {
         QMessageBox::warning(this, tr("Пустое поле"),
                              tr("Не введено поле"),
+                             QMessageBox::Close);
+        return false;
+    }
+    if (_line3->text().toInt() != _line1->text().toInt() + 1)
+    {
+        QMessageBox::warning(this, tr("Неверные данные"),
+                             tr("Количество узлов должно быть больше на 1 количества стержней"),
                              QMessageBox::Close);
         return false;
     }
@@ -236,8 +288,8 @@ bool Tables::saveFile(const QString& fileName)
 
         return true;
 }
-template <typename T>
-void Tables::writeToFile(QTextStream &out, const QVector<QVector<T> > &vec)
+
+void Tables::writeToFile(QTextStream &out, const QVector<QVector<double>> &vec)
 {
     for (auto i = 0; i < vec.size(); ++i)
     {
@@ -294,7 +346,7 @@ void Tables::read()
 {
     QString fileName;
     QVector<QString> ss;
-    fileName = QFileDialog::getOpenFileName(this, tr("Открыть файл"), "/home", tr("Text (*.txt)"));
+    fileName = QFileDialog::getOpenFileName(this, tr("Открыть файл"), "C:\\Users\\Admin\\Desktop", tr("Text (*.txt)"));
     readFromFile(fileName);
 }
 void Tables::readFromFile(const QString& fileName)
@@ -341,7 +393,6 @@ void Tables::readIntoVecs(QTextStream& in, QVector<QVector<double>>& vec)
 
         vec.push_back(temp_vec);
         s_2 = in.readLine();
-
     }
 }
 void Tables::setTables()
@@ -354,6 +405,10 @@ void Tables::setTables()
     _line1->setText(QString::number(params.types_for_rod.size()));
     _line2->setText(QString::number(params.types_descrip.size()));
     _line3->setText(QString::number(params.centred_loads.size()));
+    if (params.fixed_nodes[0] != 0)
+        left->setCheckState(Qt::Checked);
+    if (params.fixed_nodes[1] != 0)
+        right->setCheckState(Qt::Checked);
 }
 void Tables::setTable(const QVector<int> &vec, QTableWidget* table)
 {
@@ -379,6 +434,38 @@ void Tables::setTable(const QVector<QVector<double>>& vec, QTableWidget* table)
 
 void Tables::drawConstruction()
 {
-
+    
 }
+void Tables::checkBoxForLeft()
+{
+    if (left->isChecked())
+        _t_4->setItem(0, 0, new QTableWidgetItem("1"));
+    else
+        _t_4->setItem(0, 0, new QTableWidgetItem("0"));
+}
+void Tables::checkBoxForRight()
+{
+    if (right->isChecked())
+        _t_4->setItem(1, 0, new QTableWidgetItem(_line3->text()));
+    else
+        _t_4->setItem(1, 0, new QTableWidgetItem("0"));
+}
+
+void Tables::sendParamsForDraw()
+{
+    emit passParamsForDrawing(params);
+}
+
+void Tables::checkEmptyCells(const QTableWidget *t)
+{
+    for (auto i = 0; i < t->rowCount(); ++i)
+    {
+        for (auto j = 0; j < t->columnCount(); ++j)
+        {
+            if (t->item(i, j)->text() == "")
+                t->item(i, j)->setText(tr("0"));
+        }
+    }
+}
+
 
