@@ -44,6 +44,8 @@ void Tables::setParamTables()
 
 void Tables::prepareParams()
 {
+    if(!checkTableEmptyness())
+        return;
     saveParams();
 
     emit passParams(params);
@@ -51,6 +53,8 @@ void Tables::prepareParams()
 
 void Tables::saveParams()
 {
+    if (!checkRods())
+        return;
     clearVectors(params);
     checkEmptyCells(_t_2);
     checkEmptyCells(_t_3);
@@ -82,9 +86,6 @@ void Tables::saveParams()
     }
     if (!checkFixedNodes())
         return;
-    if (!checkRods())
-        return;
-
 }
 
 void Tables::convertLoads(QVector<int>& vec)
@@ -330,9 +331,9 @@ bool Tables::checkFixedNodes()
 }
 bool Tables::checkRods()
 {
-    for (auto i = 0; i < params.types_for_rod.size(); ++i)
+    for (auto i = 0; i < _t_2->rowCount(); ++i)
     {
-        if (params.types_for_rod[i] > _line2->text().toInt() || params.types_for_rod[i] < 1)
+        if (_t_2->item(i, 0)->text().toInt() > _line2->text().toInt() || _t_2->item(i, 0)->text().toInt() < 1)
         {
             QMessageBox::warning(this, tr("Неверные данные"),
                                  tr("неверный тип стержня"),
@@ -453,6 +454,8 @@ void Tables::checkBoxForRight()
 
 void Tables::sendParamsForDraw()
 {
+    if(!checkTableEmptyness())
+        return;
     emit passParamsForDrawing(params);
 }
 
@@ -468,4 +471,14 @@ void Tables::checkEmptyCells(const QTableWidget *t)
     }
 }
 
-
+bool Tables::checkTableEmptyness()
+{
+    if (_t_2->rowCount() == 0 || _t_3->rowCount() == 0 || _t_5->rowCount() == 0 || _t_6->rowCount() == 0)
+    {
+        QMessageBox::warning(this, tr("Неверные данные"),
+                             tr("Ничего не введено"),
+                             QMessageBox::Close);
+        return false;
+    }
+    return true;
+}

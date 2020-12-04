@@ -34,4 +34,3 @@ private:
     
     QStackedWidget* stackedWidget;
 };
-

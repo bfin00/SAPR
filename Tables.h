@@ -80,7 +80,7 @@ private:
     void checkBoxForLeft();
     void checkBoxForRight();
     void checkEmptyCells(const QTableWidget* t);
-
+    bool checkTableEmptyness();
 
     void writeToFile(QTextStream& out, const QVector<QVector<double>>& vec);
     template <typename T>
@@ -88,4 +88,3 @@ private:
 
     void drawConstruction();
 };
-

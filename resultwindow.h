@@ -1,7 +1,7 @@
 #ifndef RESULTWINDOW_H
 #define RESULTWINDOW_H
 #include <QWidget>
-struct Params;
+#include "Tables.h"
 class QTableWidget;
 class QLabel;
 class ResultWindow: public QWidget
@@ -14,8 +14,13 @@ signals:
     void returnBack();
 public slots:
     void calcResuluts(const Params& params);
+
 private slots:
     void returnToTables();
+    //void showAllValuesTables();
+    void showTables();
+    //void showGraphics();
+    void openPointWindow();
 private:
     QVector<double> _delta;
     QVector<QVector<double>> _A;
@@ -26,7 +31,8 @@ private:
     QVector<QVector<double>> _sigma;
     QVector<double> _startSigma;
 
-    QLabel* lbl;
+    QLineEdit* _calcLine;
+    Params _params;
 
     void calcMatrixDelta(const Params& params);
     void calcMatrixA(const Params& params);
@@ -38,12 +44,21 @@ private:
     void nullA(const Params& params);
     double getDeterminant(const QVector<QVector<double>> vect);
     int gauss(QVector<QVector<double>> a, QVector<double> & ans);
+    int getRodNumber(const double& value, const double& allRodsL);
 
-    void calcInPoint();
-    void showTables();
-    void showGraphics();
+    void defineRod(QTableWidget* tabN, QTableWidget* tabU, QTableWidget* tabS);
     void clearVectors();
     void checkSigmaCells(QTableWidget* table);
+    void setParams(const Params& params);
+    void calcOneColumnTables(QTableWidget* tabN, QTableWidget* tabU, QTableWidget* tabS, const int& rodNumber, const double& x);
+    void calcTwoColumnsTables(QTableWidget* tabN, QTableWidget* tabU, QTableWidget* tabS, const int& rodNumber, const double& x);
+    void makeTables(QDialog* dialog);
+    //void makeTablesAllValues(QDialog* dialog);
+    void fill_NUS_tables(QTableWidget* tabN, QTableWidget* tabU, QTableWidget* tabS);
+    //void fill_NUSAllValues_tables(QTableWidget* tableN, QTableWidget* tableU, QTableWidget* tableSigma);
+    //void convertN(QVector<double>& vec, QVector<int>& end);
+
+    bool checkXValid();
 };
 
 #endif // RESULTWINDOW_H

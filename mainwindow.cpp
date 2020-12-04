@@ -56,3 +56,4 @@ void MainWindow::setResultWindow(){stackedWidget->setCurrentIndex(1);}
 MainWindow::~MainWindow() = default;
 
 
+

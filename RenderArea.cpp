@@ -44,12 +44,12 @@ void RenderArea::drawDistrLoads(const int& i, const Params& params,const double&
 {
     if (params.distr_loads[i] > 0)
     {
-        QPixmap pixmap("C:\\Users\\Admin\\Documents\\SAPR_\\distrLoads+.jpg");
+        QPixmap pixmap(":/resources/img/distrLoads+.jpg");
         drawDistr(pixmap, params, coordX, coordY, i);
     }
     if (params.distr_loads[i] < 0)
     {
-        QPixmap pixmap("C:\\Users\\Admin\\Documents\\SAPR_\\distrLoads-.jpg");
+        QPixmap pixmap(":/resources/img/distrLoads-.jpg");
         drawDistr(pixmap, params, coordX, coordY, i);
     }
 }
@@ -58,13 +58,13 @@ void RenderArea::drawFixedNodes(const Params& params, const double& coordY, cons
 {
     if (params.fixed_nodes[0] == 1)
     {
-        QPixmap pixmap("C:\\Users\\Admin\\Documents\\SAPR_\\left.jpg");
+        QPixmap pixmap(":/resources/img/left.jpg");
         QGraphicsPixmapItem* item = _scene->addPixmap(pixmap);
         item->setPos(0 - pixmap.width(), coordY - pixmap.height()/2);
     }
     if (params.fixed_nodes[1] == params.centred_loads.size())
     {
-        QPixmap pixmap("C:\\Users\\Admin\\Documents\\SAPR_\\right.jpg");
+        QPixmap pixmap(":/resources/img/right.jpg");
         QGraphicsPixmapItem* item = _scene->addPixmap(pixmap);
         item->setPos(endX + 1, coordY - pixmap.height()/2);
     }
@@ -104,12 +104,12 @@ void RenderArea::drawCentredLoads(const int& i, const Params& params, const doub
 {
         if (params.centred_loads[i] > 0)
         {
-            QPixmap pixmap("C:\\Users\\Admin\\Documents\\SAPR_\\centredLoads+.jpg");
+            QPixmap pixmap(":/resources/img/centredLoads+.jpg");
             drawCentred(pixmap, params, coordX, coordY, i);
         }
         if (params.centred_loads[i] < 0)
         {
-            QPixmap pixmap("C:\\Users\\Admin\\Documents\\SAPR_\\centredLoads-.jpg");
+            QPixmap pixmap(":/resources/img/centredLoads-.jpg");
             drawCentred(pixmap, params, coordX, coordY, i);
         }
 }
