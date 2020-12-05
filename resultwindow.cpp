@@ -14,7 +14,8 @@ ResultWindow::ResultWindow(QWidget* parent): QWidget(parent)
     _calcLine = new QLineEdit;
     auto returnBut = new QPushButton(tr("Назад"));
     auto tablesBut = new QPushButton(tr("Таблицы"));
-    //auto graphicsBut = new QPushButton(tr("Эпюры"));
+    auto tablesAllValuesBut = new QPushButton(tr("Таблицы"));
+    auto graphicsBut = new QPushButton(tr("Эпюры"));
     returnBut->setFixedSize({100, 50});
     auto botLayout = new QHBoxLayout(botBox);
 
@@ -24,12 +25,14 @@ ResultWindow::ResultWindow(QWidget* parent): QWidget(parent)
 
     topLayout->addWidget(returnBut);
     topLayout->addWidget(tablesBut);
-    //topLayout->addWidget(graphicsBut);
+    topLayout->addWidget(tablesAllValuesBut);
+    topLayout->addWidget(graphicsBut);
     mainLayout->addWidget(topBox);
     mainLayout->addWidget(botBox);
     connect(returnBut, &QPushButton::clicked, this, &ResultWindow::returnToTables);
     connect(tablesBut, &QPushButton::clicked, this, &ResultWindow::showTables);
-    //connect(graphicsBut, &QPushButton::clicked, this, &ResultWindow::showGraphics);
+    connect(tablesAllValuesBut, &QPushButton::clicked, this, &ResultWindow::showAllValuesTables);
+    connect(graphicsBut, &QPushButton::clicked, this, &ResultWindow::showGraphics);
     connect(calcBtn, &QPushButton::clicked, this, &ResultWindow::openPointWindow);
 };
 void ResultWindow::calcResuluts(const Params& params)
@@ -37,8 +40,12 @@ void ResultWindow::calcResuluts(const Params& params)
     setParams(params);
     clearVectors();
     calcMatrixes(params);   
-}
 
+}
+void ResultWindow::showGraphics()
+{
+
+}
 void ResultWindow::calcMatrixDelta(const Params &params)
 {
     _delta.resize(params.centred_loads.size());
@@ -269,7 +276,7 @@ void ResultWindow::clearVectors()
 void ResultWindow::checkSigmaCells(QTableWidget* table)
 {
     for (auto i = 0; i < table->rowCount(); ++i)
-        for (auto j = table->columnCount()-1; j > 0; --j)
+        for (auto j = 0; j < table->columnCount(); ++j)
             if (abs(_sigma[i][j]) > abs(_startSigma[i]))
                 table->item(i,j)->setBackground(Qt::red);
 }
@@ -463,89 +470,58 @@ void ResultWindow::fill_NUS_tables(QTableWidget *tableN, QTableWidget *tableU, Q
         tableSigma->setItem(i, 1, new QTableWidgetItem(item2));
     }
 }
-//void ResultWindow::showAllValuesTables()
-//{
-//    auto tablesWindow = new QDialog(this, Qt::WindowStaysOnTopHint);
-//    tablesWindow->setWindowTitle(tr("Значения компонент (шаг 0.2)"));
-//    tablesWindow->setMinimumSize(1000, 600);
-//    makeTablesAllValues(tablesWindow);
-//    tablesWindow->show();
-//}
-//void ResultWindow::makeTablesAllValues(QDialog *dialog)
-//{
-//    auto layout = new QHBoxLayout(dialog);
-//    auto tableN = new QTableWidget(_N.size(), 2, dialog);
-//    auto tableU = new QTableWidget(_u.size(), 2, dialog);
-//    auto tableSigma = new QTableWidget(_u.size(), 2, dialog);
-//    tableN->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("x")));
-//    tableN->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Nx(x)")));
-//    tableU->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("x")));
-//    tableU->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Ux(x)")));
-//    tableSigma->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("x")));
-//    tableSigma->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("σ(x)")));
-//    layout->addWidget(tableN);
-//    layout->addWidget(tableU);
-//    layout->addWidget(tableSigma);
-//    fill_NUSAllValues_tables(tableN, tableU, tableSigma);
-//    checkSigmaCells(tableSigma);
-//}
+void ResultWindow::showAllValuesTables()
+{
+    auto tablesWindow = new QDialog(this, Qt::WindowStaysOnTopHint);
+    tablesWindow->setWindowTitle(tr("Значения компонент (шаг 0.2)"));
+    tablesWindow->setMinimumSize(1000, 600);
+    makeTablesAllValues(tablesWindow);
+    tablesWindow->show();
+}
+void ResultWindow::makeTablesAllValues(QDialog *dialog)
+{
+    auto layout = new QHBoxLayout(dialog);
+    if (_N.size() != _u.size())
+        return;
+    for (auto i = 0; i < _N.size(); ++i)
+        if (_N[i].size() != _u[i].size())
+            return;
+    auto tableN = new QTableWidget(_N.size(), 5, dialog);
+    tableN->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Номер стержня")));
+    tableN->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("x")));
+    tableN->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Nx(x)")));
+    tableN->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("ux(x)")));
+    tableN->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("σx(x)")));
+    layout->addWidget(tableN);
 
-//void ResultWindow::fill_NUSAllValues_tables(QTableWidget *tableN, QTableWidget *tableU, QTableWidget *tableSigma)
-//{
-//    double x = 0;
-//    QVector<double> NforTable;
-//    QVector<int> Nends;
-//    convertN(NforTable, Nends);
-//    Nends.erase(Nends.begin());
-//    tableN->setRowCount(NforTable.size());
-//    for (auto i = 0; i < NforTable.size(); ++i)
-//    {
-//        if (i == Nends.front())
-//        {
-//            x = x - 0.2;
-//            tableN->setItem(i, 0, new QTableWidgetItem(QString::number(x)));
-//            tableN->setItem(i, 1, new QTableWidgetItem(QString::number(Nends[i])));
-//            x += 0.2;
-//            Nends.erase(Nends.begin());
-//            continue;
-//        }
-//        tableN->setItem(i, 0, new QTableWidgetItem(QString::number(x)));
-//        tableN->setItem(i, 1, new QTableWidgetItem(QString::number(Nends[i])));
-//        x += 0.2;
-//    }
+    fill_NUSAllValues_tables(tableN);
+    for (auto i = 0; i < tableN->rowCount(); ++i)
+        if (abs(tableN->item(i, 4)->text().toDouble()) > abs(_startSigma[tableN->item(i, 0)->text().toInt() - 1]))
+            tableN->item(i,4)->setBackground(Qt::red);
+}
+
+void ResultWindow::fill_NUSAllValues_tables(QTableWidget *tableN)
+{
+    int start = 0;
+    int rowNumber = 0;
+    for (auto i = 0; i < _N.size(); ++i)
+        rowNumber += _N[i].size();
+    tableN->setRowCount(rowNumber);
+    for (auto i = 0; i < _N.size(); ++i)
+    {
+        double x = 0;
+        for (auto j = 0; j < _N[i].size(); ++j)
+        {
+            tableN->setItem(start, 0, new QTableWidgetItem(QString::number(i+1)));
+            tableN->setItem(start, 1, new QTableWidgetItem(QString::number(x)));
+            tableN->setItem(start, 2, new QTableWidgetItem(QString::number(_N[i][j])));
+            tableN->setItem(start, 3, new QTableWidgetItem(QString::number(_u[i][j])));
+            tableN->setItem(start, 4, new QTableWidgetItem(QString::number(_N[i][j]/_params.type_for_each_rod[i][1])));
+            x += 0.2;
+            ++start;
+        }
+    }
 
 
-//    for (auto i = 0; i < tableU->rowCount(); ++i)
-//    {
-//        for (auto j = 0; j < tableU->columnCount(); ++j)
-//        {
-//            _u[i][0] = round(_u[i][0]*1000)/1000;
-//            _u[i][_u[i].size()-1] = round(_u[i][_u[i].size()-1] * 1000) / 1000;
-//            QString item1 = QString::number(_u[i][0]);
-//            QString item2 = QString::number(_u[i][_u[i].size()-1]);
-//            tableU->setItem(i, 0, new QTableWidgetItem(item1));
-//            tableU->setItem(i, 1, new QTableWidgetItem(item2));
-//        }
-//    }
-//    for (auto i = 0; i < tableSigma->rowCount(); ++i)
-//    {
-//        for (auto j = 0; j < tableSigma->columnCount(); ++j)
-//        {
-//            QString item1 = QString::number(_sigma[i][0]);
-//            QString item2 = QString::number(_sigma[i][1]);
-//            tableSigma->setItem(i, 0, new QTableWidgetItem(item1));
-//            tableSigma->setItem(i, 1, new QTableWidgetItem(item2));
-//        }
-//    }
-//}
+}
 
-//void ResultWindow::convertN(QVector<double>& vec, QVector<int>& ends)
-//{
-//    for (auto i = 0; i < _N.size(); ++i)
-//        for (auto j = 0; j < _N[i].size(); ++j)
-//        {
-//            vec.push_back(_N[i][j]);
-//            if (j == 0)
-//                ends.push_back(vec.size() - 1);
-//        }
-//}

@@ -17,9 +17,9 @@ public slots:
 
 private slots:
     void returnToTables();
-    //void showAllValuesTables();
+    void showAllValuesTables();
     void showTables();
-    //void showGraphics();
+    void showGraphics();
     void openPointWindow();
 private:
     QVector<double> _delta;
@@ -53,10 +53,9 @@ private:
     void calcOneColumnTables(QTableWidget* tabN, QTableWidget* tabU, QTableWidget* tabS, const int& rodNumber, const double& x);
     void calcTwoColumnsTables(QTableWidget* tabN, QTableWidget* tabU, QTableWidget* tabS, const int& rodNumber, const double& x);
     void makeTables(QDialog* dialog);
-    //void makeTablesAllValues(QDialog* dialog);
+    void makeTablesAllValues(QDialog* dialog);
     void fill_NUS_tables(QTableWidget* tabN, QTableWidget* tabU, QTableWidget* tabS);
-    //void fill_NUSAllValues_tables(QTableWidget* tableN, QTableWidget* tableU, QTableWidget* tableSigma);
-    //void convertN(QVector<double>& vec, QVector<int>& end);
+    void fill_NUSAllValues_tables(QTableWidget* tableN);
 
     bool checkXValid();
 };
