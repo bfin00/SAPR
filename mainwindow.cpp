@@ -46,7 +46,6 @@ void MainWindow::setUpMenus()
     connect(openAct, &QAction::triggered, _tables, &Tables::read);
     auto exitAction = fileMenu->addAction(tr("E&xit"), qApp, &QCoreApplication::quit);
     exitAction->setShortcuts(QKeySequence::Quit);
-
 }
 
 void MainWindow::setTableWindow() {stackedWidget->setCurrentIndex(0);}

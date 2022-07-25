@@ -1,8 +1,13 @@
 ﻿#include "resultwindow.h"
 #include <QtWidgets>
 #include <exception>
+#include <QChartView>
+#include <QLineSeries>
+#include <QPointF>
+
 #define EPS 0.000001
 #define INF 1000000
+QT_CHARTS_USE_NAMESPACE
 ResultWindow::ResultWindow(QWidget* parent): QWidget(parent)
 {
     auto mainLayout = new QVBoxLayout(this);
@@ -44,7 +49,54 @@ void ResultWindow::calcResuluts(const Params& params)
 }
 void ResultWindow::showGraphics()
 {
+    auto dialog = new QDialog{this};
+    auto window = new QTabWidget {dialog};
+    window->setMinimumSize(1300, 800);
 
+    auto uGraphicWidget = new QWidget(window);
+    auto NGraphicWidget = new QWidget(window);
+
+    window->insertTab(0, NGraphicWidget, tr("График N(x)"));
+    window->insertTab(1, uGraphicWidget, tr("График u(x)"));
+    auto layout_N = new QVBoxLayout {NGraphicWidget};
+    auto layout_u = new QVBoxLayout {uGraphicWidget};
+
+    QChart* ch = new QChart();
+    auto series = new QLineSeries;
+    double x = 0;
+    for (auto i = 0; i < _N.size(); ++i)
+    {
+        for (auto j = 0; j < _N[i].size(); ++j)
+        {
+            *series << QPointF(x, _N[i][j]);
+            x += 0.2;
+            if (j == _N[i].size() - 1)
+                x -= 0.2;
+        }
+    }
+    ch->addSeries(series);
+    ch->createDefaultAxes();
+    QChartView* view = new QChartView(ch);
+    layout_N->addWidget(view);
+
+    auto ch_u = new QChart();
+    auto series_u = new QLineSeries;
+    x = 0;
+    for (auto i = 0; i < _u.size(); ++i)
+    {
+        for (auto j = 0; j < _u[i].size(); ++j)
+        {
+            *series_u << QPointF(x, _u[i][j]);
+            x += 0.2;
+            if (j == _u[i].size() - 1)
+                x -= 0.2;
+        }
+    }
+    ch_u->addSeries(series_u);
+    ch_u->createDefaultAxes();
+    QChartView* view_u = new QChartView(ch_u);
+    layout_u->addWidget(view_u);
+    dialog->show();
 }
 void ResultWindow::calcMatrixDelta(const Params &params)
 {
@@ -359,6 +411,12 @@ int ResultWindow::getRodNumber(const double& value, const double& allRodsL)
 
 void ResultWindow::calcOneColumnTables(QTableWidget *tabN, QTableWidget *tabU, QTableWidget *tabS, const int &rodNumber, const double& x)
 {
+    double X = x;
+    if (rodNumber != 0 && rodNumber - 1 != 0)
+    {
+        for (auto i = 0; i < rodNumber; ++i)
+            X -= _params.type_for_each_rod[i][4];
+    }
     tabN->setColumnCount(1);
     tabS->setColumnCount(1);
     double E = _params.type_for_each_rod[rodNumber][2];
@@ -366,18 +424,27 @@ void ResultWindow::calcOneColumnTables(QTableWidget *tabN, QTableWidget *tabU, Q
     double L = _params.type_for_each_rod[rodNumber][4];
     double q = _params.distr_loads[rodNumber];
     double S = _params.type_for_each_rod[rodNumber][3];
-    double valueN = ((E * A) / L) * (_U[rodNumber][1] - _U[rodNumber][0]) + ((q * L) / 2) * (1 - 2 * (x / L));
-    double valueU = (1 - x/L) * _U[rodNumber][0] + (x / L) * _U[rodNumber][1] + (q * L*L * x)/(2*E*A*L) * (1 - x/L);
+    double valueN = ((E * A) / L) * (_U[rodNumber][1] - _U[rodNumber][0]) + ((q * L) / 2) * (1 - 2 * (X / L));
+    double valueU = (1 - X/L) * _U[rodNumber][0] + (X / L) * _U[rodNumber][1] + (q * L*L * X)/(2*E*A*L) * (1 - X/L);
     double valueS = valueN / A;
     tabN->setItem(0, 0, new QTableWidgetItem(QString::number(valueN)));
     tabU->setItem(0, 0, new QTableWidgetItem(QString::number(valueU)));
     tabS->setItem(0, 0, new QTableWidgetItem(QString::number(valueS)));
-    if (valueS > S)
-        tabS->item(0, 0)->setBackgroundColor(Qt::red);
+    if (abs(valueS) > abs(S))
+        tabS->item(0, 0)->setBackground(Qt::red);
 }
 
 void ResultWindow::calcTwoColumnsTables(QTableWidget *tabN, QTableWidget *tabU, QTableWidget *tabS, const int &rodNumber, const double& x)
 {
+    double X = x;
+    double prevX = x;
+    if (rodNumber != 0 && rodNumber - 1 != 0)
+    {
+        for (auto i = 0; i < rodNumber; ++i)
+            X -= _params.type_for_each_rod[i][4];
+        for (auto i = 0; i < (rodNumber - 1); ++i)
+            prevX -= _params.type_for_each_rod[i][4];
+    }
     tabN->setColumnCount(2);
     tabS->setColumnCount(2);
     tabS->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("σ(X) - стержень 2")));
@@ -392,20 +459,20 @@ void ResultWindow::calcTwoColumnsTables(QTableWidget *tabN, QTableWidget *tabU, 
     double prevL = _params.type_for_each_rod[rodNumber-1][4];
     double prevS = _params.type_for_each_rod[rodNumber-1][3];
     double prevq = _params.distr_loads[rodNumber-1];
-    double valueN = ((E * A) / L) * (_U[rodNumber][1] - _U[rodNumber][0]) + ((q * L) / 2) * (1 - 2 * (x / L));
-    double valueU = (1 - x/L) * _U[rodNumber][0] + (x / L) * _U[rodNumber][1] + (q * L*L * x)/(2*E*A*L) * (1 - x/L);
+    double valueN = ((E * A) / L) * (_U[rodNumber][1] - _U[rodNumber][0]) + ((q * L) / 2) * (1 - 2 * (X / L));
+    double valueU = (1 - prevX/prevL) * _U[rodNumber-1][0] + (prevX / prevL) * _U[rodNumber-1][1] + (prevq * prevL*prevL * prevX)/(2*prevE*prevA*prevL) * (1 - prevX/prevL);
     double valueS = valueN / A;
-    double valuePrevN = ((prevE * prevA) / prevL) * (_U[rodNumber-1][1] - _U[rodNumber-1][0]) + ((prevq * prevL) / 2) * (1 - 2 * (x / prevL));
+    double valuePrevN = ((prevE * prevA) / prevL) * (_U[rodNumber-1][1] - _U[rodNumber-1][0]) + ((prevq * prevL) / 2) * (1 - 2 * (X / prevL));
     double valuePrevS = valuePrevN / prevA;
-    tabN->setItem(0, 0, new QTableWidgetItem(QString::number(valueN)));
+    tabN->setItem(0, 1, new QTableWidgetItem(QString::number(valueN)));
     tabU->setItem(0, 0, new QTableWidgetItem(QString::number(valueU)));
-    tabS->setItem(0, 0, new QTableWidgetItem(QString::number(valueS)));
-    tabN->setItem(0, 1, new QTableWidgetItem(QString::number(valuePrevN)));
-    tabS->setItem(0, 1, new QTableWidgetItem(QString::number(valuePrevS)));
+    tabS->setItem(0, 1, new QTableWidgetItem(QString::number(valueS)));
+    tabN->setItem(0, 0, new QTableWidgetItem(QString::number(valuePrevN)));
+    tabS->setItem(0, 0, new QTableWidgetItem(QString::number(valuePrevS)));
     if (abs(valuePrevS) > abs(prevS))
-        tabS->item(0, 1)->setBackgroundColor(Qt::red);
+        tabS->item(0, 0)->setBackground(Qt::red);
     if (abs(valueS) > abs(S))
-        tabS->item(0, 0)->setBackgroundColor(Qt::red);
+        tabS->item(0, 1)->setBackground(Qt::red);
 }
 
 bool ResultWindow::checkXValid()
@@ -521,7 +588,5 @@ void ResultWindow::fill_NUSAllValues_tables(QTableWidget *tableN)
             ++start;
         }
     }
-
-
 }
 

@@ -70,6 +70,8 @@ private:
     bool saveFile(const QString& fileName);
     bool checkFixedNodes();
     bool checkRods();
+    void fillTables();
+    void fillTable(QTableWidget* tab);
 
     void readFromFile(const QString& fileName);
     void readIntoVecs(QTextStream& in, QVector<int>& vec);

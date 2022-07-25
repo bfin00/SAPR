@@ -45,12 +45,12 @@ void RenderArea::drawDistrLoads(const int& i, const Params& params,const double&
     if (params.distr_loads[i] > 0)
     {
         QPixmap pixmap(":/resources/img/distrLoads+.jpg");
-        drawDistr(pixmap, params, coordX, coordY, i);
+        drawDistr(pixmap, coordX, coordY, i);
     }
     if (params.distr_loads[i] < 0)
     {
         QPixmap pixmap(":/resources/img/distrLoads-.jpg");
-        drawDistr(pixmap, params, coordX, coordY, i);
+        drawDistr(pixmap, coordX, coordY, i);
     }
 }
 
@@ -70,7 +70,7 @@ void RenderArea::drawFixedNodes(const Params& params, const double& coordY, cons
     }
 }
 
-void RenderArea::drawDistr(QPixmap& pixmap, const Params& params, const double& coordX, const double& coordY,
+void RenderArea::drawDistr(QPixmap& pixmap, const double& coordX, const double& coordY,
                                          const int& i)
 {
         double a = vecForDraw[i][4];

@@ -40,6 +40,7 @@ void Tables::setParamTables()
     //t_4 - задается явно
     _t_5->setRowCount(_line3->text().toInt());
     _t_6->setRowCount(_line1->text().toInt());
+    fillTables();
 }
 
 void Tables::prepareParams()
@@ -257,15 +258,15 @@ bool Tables::saveFile(const QString& fileName)
         {
             QTextStream out(&file);
 
-            out << tr("Тип для стержня") << endl;
+            out << tr("Тип для стержня") << Qt::endl;
             writeToFile(out, params.types_for_rod);
-            out << tr("Описание типов стержня") << endl;
+            out << tr("Описание типов стержня") << Qt::endl;
             writeToFile(out, params.types_descrip);
-            out << tr("Заделки") << endl;
+            out << tr("Заделки") << Qt::endl;
             writeToFile(out, params.fixed_nodes);
-            out << tr("Сосредоточенные нагрузки") << endl;
+            out << tr("Сосредоточенные нагрузки") << Qt::endl;
             writeToFile(out, params.centred_loads);
-            out << tr("Продольные нагрузки") << endl;
+            out << tr("Продольные нагрузки") << Qt::endl;
             writeToFile(out, params.distr_loads);
 
             if (!file.commit())
@@ -298,9 +299,9 @@ void Tables::writeToFile(QTextStream &out, const QVector<QVector<double>> &vec)
         {
             out << vec[i][j] << " ";
         }
-        out << endl;
+        out << Qt::endl;
     }
-    out << endl;
+    out << Qt::endl;
 }
 template <typename T>
 void Tables::writeToFile(QTextStream &out, const QVector<T> &vec)
@@ -309,7 +310,7 @@ void Tables::writeToFile(QTextStream &out, const QVector<T> &vec)
     {
         out << vec[i] << " ";
     }
-    out << endl << endl;
+    out << Qt::endl << Qt::endl;
 }
 bool Tables::checkFixedNodes()
 {
@@ -481,4 +482,19 @@ bool Tables::checkTableEmptyness()
         return false;
     }
     return true;
+}
+
+void Tables::fillTables()
+{
+    fillTable(_t_2);
+    fillTable(_t_3);
+    fillTable(_t_5);
+    fillTable(_t_6);
+}
+
+void Tables::fillTable(QTableWidget* tab)
+{
+    for (auto i = 0; i < tab->rowCount(); ++i)
+        for (auto j = 0; j < tab->columnCount(); ++j)
+            tab->setItem(i, j, new QTableWidgetItem(QString::number(1)));
 }

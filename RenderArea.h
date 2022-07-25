@@ -25,7 +25,7 @@ private:
     void drawDistrLoads(const int& i, const Params& params,const double& coordX, const double& coordY);
     void drawFixedNodes(const Params& params, const double& coordY, const double& endX);
 
-    void drawDistr(QPixmap& pixmap, const Params& params, const double& coordX, const double& coordY,
+    void drawDistr(QPixmap& pixmap, const double& coordX, const double& coordY,
                                  const int& i);
     void drawCentredLoads(const int& i, const Params& params,const double& coordX, const double& coordY);
     void drawCentred(QPixmap& pixmap, const Params& params, const double& coordX, const double& coordY,
